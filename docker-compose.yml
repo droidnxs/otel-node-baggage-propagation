@@ -1,0 +1,67 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  publisher:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: npm run publisher
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - OTEL_SERVICE_NAME=amqp-publisher
+      - OTEL_TRACES_EXPORTER=console
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOG_LEVEL=info
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  api-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: npm run api-service
+    environment:
+      - PORT=3000
+      - OTEL_SERVICE_NAME=api-service
+      - OTEL_TRACES_EXPORTER=console
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOG_LEVEL=info
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: npm run consumer
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - API_SERVICE_URL=http://api-service:3000
+      - OTEL_SERVICE_NAME=amqp-consumer
+      - OTEL_TRACES_EXPORTER=console
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOG_LEVEL=info
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      api-service:
+        condition: service_healthy
+
