@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "publisher": "npx tsx --import @opentelemetry/auto-instrumentations-node/register src/publisher.ts",
-    "consumer": "npx tsx --import @opentelemetry/auto-instrumentations-node/register src/consumer.ts",
-    "api-service": "npx tsx --import @opentelemetry/auto-instrumentations-node/register src/api-service.ts",
+    "publisher": "npx tsx --experimental-loader=@opentelemetry/instrumentation/hook.mjs --import @opentelemetry/auto-instrumentations-node/register src/publisher.ts",
+    "consumer": "npx tsx --experimental-loader=@opentelemetry/instrumentation/hook.mjs --import @opentelemetry/auto-instrumentations-node/register src/consumer.ts",
+    "api-service": "npx tsx --experimental-loader=@opentelemetry/instrumentation/hook.mjs --import @opentelemetry/auto-instrumentations-node/register src/api-service.ts",
     "clean": "rm -rf dist"
   },
   "dependencies": {
